@@ -8,22 +8,20 @@ import numpy as np
 import statistics
 import matplotlib.pyplot as plt
 from operator import itemgetter, attrgetter
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import confusion_matrix
+from sklearn.preprocessing import StandardScaler
+import seaborn as sns
 
 
 def calcularAcuracias(dadosTrain, rotuloTrain, dadosTeste, testRots):
     #Para o range de 1 ao tamanho da base de dados
-    for i in range(1, len(dadosTeste)+1):
+    for i in range(1, 15):
 
         #Aplica KNN
         rP = meuKnn(dadosTrain, rotuloTrain, dadosTeste, i)
 
-        estaCorreto = rP == testRots
-
-        numCorreto = sum(estaCorreto)
-
-        totalNum = len(testRots)
-
-        acuracia = np.round((numCorreto / totalNum), 2)
+        acuracia = np.round(accuracy_score(testRots, rP), 2)
 
         print('Acurácia do KNN com k = ' + str(i))
         print(acuracia)
@@ -34,7 +32,7 @@ def getDadosRotulo(dados, rotulos, rotulo, indice):
 
     for idx in range(0, len(dados)):
 
-        if (rotulos[idx][0] == rotulo):
+        if (rotulos[idx] == rotulo):
             ret.append(dados[idx][indice])
 
     return ret
@@ -43,12 +41,9 @@ def getDadosRotulo(dados, rotulos, rotulo, indice):
 def visualizaPontos(dados, rotulos, d1, d2):
     fig, ax = plt.subplots()
 
-    ax.scatter(getDadosRotulo(dados, rotulos, 1, d1), getDadosRotulo(dados, rotulos, 1, d2), c='red', marker='^')
+    ax.scatter(getDadosRotulo(dados, rotulos, 'mask', d1), getDadosRotulo(dados, rotulos, 'mask', d2), c='red', marker='^')
 
-    ax.scatter(getDadosRotulo(dados, rotulos, 2, d1), getDadosRotulo(dados, rotulos, 2, d2), c='blue', marker='+')
-
-    ax.scatter(getDadosRotulo(dados, rotulos, 3, d1), getDadosRotulo(dados, rotulos, 3, d2), c='green', marker='.')
-
+    ax.scatter(getDadosRotulo(dados, rotulos, 'no-mask', d1), getDadosRotulo(dados, rotulos, 'no-mask', d2), c='blue', marker='+')
 
     plt.show()
 
@@ -105,7 +100,6 @@ def meuKnn(dadosTrain, rotuloTrain, dadosTeste, k):
     #Para cada exemplo de teste
     for x in range(len(dadosTeste)):
         listRotulos = []
-        listRotuloMode = []
 
         #Calcule a distância entre o exemplo de teste e os dados de treinamento
         listDist = dist(dadosTrain, dadosTeste[x], rotuloTrain)
@@ -126,8 +120,6 @@ def meuKnn(dadosTrain, rotuloTrain, dadosTeste, k):
     return listResult
 
 if __name__ == '__main__':
-    import scipy.io as scipy
-
     # Ler aquivo de dados
     baseTeste = pd.read_csv("test/_annotations.csv", header=None)
     baseTreinamento = pd.read_csv("train/_annotations.csv", header=None)
@@ -146,34 +138,40 @@ if __name__ == '__main__':
     # Converter dados de teste para float
     dadosTeste[:, 0:4] = dadosTeste[:, 0:4].astype(float)
 
+    # Calcular kNN com k == 1
     rotuloPrevisto = meuKnn(dadosTreinamento, rotulosTreinamento, dadosTeste, 1)
 
-    print(rotulosTeste)
-    print(rotuloPrevisto)
-
-    estaCorreto = rotuloPrevisto == rotulosTeste
-
-    numCorreto = sum(estaCorreto)
-
-    totalNum = len(rotulosTeste)
-
-    acuracia = np.round((numCorreto / totalNum), 2)
-
+    # Cálculo da acurácia
+    acuracia = np.round(accuracy_score(rotulosTeste,rotuloPrevisto),2)
     print('Acurácia do KNN com k = 1')
     print(acuracia)
 
-    rotuloPrevisto2 = meuKnn(dadosTreinamento, rotulosTreinamento, dadosTeste, 10)
+    #visualizaPontos(dadosTeste, rotuloPrevisto, 1, 2)
 
-    estaCorreto = rotuloPrevisto2 == rotulosTeste
+    # Calcular kNN para k de 1 a 15
+    calcularAcuracias(dadosTreinamento, rotulosTreinamento, dadosTeste, rotulosTeste)
 
-    numCorreto = sum(estaCorreto)
+    # Calculo de kNN com melhor acurácia
+    rotuloPrevisto = meuKnn(dadosTreinamento, rotulosTreinamento, dadosTeste, 7)
 
-    totalNum = len(rotulosTeste)
+    # Matriz de confusão para melhor acuracia
+    cf_matrix = confusion_matrix(rotulosTeste, rotuloPrevisto)
 
-    acuracia = np.round((numCorreto / totalNum), 2)
+    ax = sns.heatmap(cf_matrix, annot=True, cmap='Blues')
 
-    print('Acurácia do KNN com k = 10')
-    print(acuracia)
+    ax.set_title('Matriz de Confusão\n\n');
+
+    ax.xaxis.set_ticklabels(['Máscara', 'Não máscara'])
+    ax.yaxis.set_ticklabels(['Máscara', 'Não máscara'])
+
+    plt.show()
+
+    # Classificação
+    report = classification_report(rotulosTeste, rotuloPrevisto, output_dict=True)
+
+    # Parâmetro classification_report
+    print('\nClassification Report')
+    print(report)
 
 
 
