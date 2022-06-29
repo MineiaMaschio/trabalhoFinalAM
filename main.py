@@ -27,48 +27,6 @@ def calcularAcuracias(dadosTrain, rotuloTrain, dadosTeste, testRots):
         print(acuracia)
 
 
-def getDadosRotulo(dados, rotulos, rotulo, indice):
-    ret = []
-
-    for idx in range(0, len(dados)):
-
-        if (rotulos[idx] == rotulo):
-            ret.append(dados[idx][indice])
-
-    return ret
-
-
-def visualizaPontos(dados, rotulos, d1, d2):
-    fig, ax = plt.subplots()
-
-    ax.scatter(getDadosRotulo(dados, rotulos, 'mask', d1), getDadosRotulo(dados, rotulos, 'mask', d2), c='red', marker='^')
-
-    ax.scatter(getDadosRotulo(dados, rotulos, 'no-mask', d1), getDadosRotulo(dados, rotulos, 'no-mask', d2), c='blue', marker='+')
-
-    plt.show()
-
-def normalizacao(dados):
-    #Minímos de cada atributo
-    min = np.amin(dados, axis=0)
-
-    # Máximos de cada atributo
-    max = np.amax(dados, axis=0)
-
-    #Para cada atributo
-    for i in range(len(dados[0])):
-
-        #Para cada dado
-        for x in range(len(dados)):
-
-            #Divisor
-            divisor = dados[x][i] - min[i]
-
-            #Dividendo
-            dividendo = max[i] - min[i]
-
-            #Resultado é salvo na própria matriz
-            dados[x][i] = divisor / dividendo
-
 def dist(dadosTrain, dadosTeste, rotuloTrain):
     #Lista de distâncias
     listDist = []
@@ -146,8 +104,6 @@ if __name__ == '__main__':
     print('Acurácia do KNN com k = 1')
     print(acuracia)
 
-    #visualizaPontos(dadosTeste, rotuloPrevisto, 1, 2)
-
     # Calcular kNN para k de 1 a 15
     calcularAcuracias(dadosTreinamento, rotulosTreinamento, dadosTeste, rotulosTeste)
 
@@ -172,6 +128,3 @@ if __name__ == '__main__':
     # Parâmetro classification_report
     print('\nClassification Report')
     print(report)
-
-
-
